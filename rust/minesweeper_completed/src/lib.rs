@@ -16,9 +16,9 @@ pub fn annotate(minefield: &[&str]) -> Vec<String> {
                 {
                     let mut count: u8 = 0;
 
-                    for di in [-1, 0, 1] as [isize; 3]
+                    for di in [-1, 0, 1]
                     {
-                        for dj in [-1, 0, 1] as [isize; 3]
+                        for dj in [-1, 0, 1]
                         {
                             match (di, dj)
                             {
