@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-pub fn frequency(input: &'static &[&str], worker_count: usize) -> HashMap<char, usize> {
+pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
+    let data = Arc::new(input);
     let counter: Arc<Mutex<HashMap<char, usize>>> = Arc::new(Mutex::new(HashMap::new()));
     let len: Arc<usize> = Arc::new(input.len());
-    let data = Arc::new(input);
     let mut handles = vec![];
 
     for i in 0..worker_count
@@ -32,10 +32,10 @@ pub fn frequency(input: &'static &[&str], worker_count: usize) -> HashMap<char, 
                                     .into_iter()
                                     .map(|_char| {
                                         let mut counter = counter.lock().unwrap();
-                                        match counter.get(&_char)
+                                        match counter.insert(_char, 1)
                                         {
-                                            Some(amount) => counter.insert(_char, amount + 1),
-                                            None => counter.insert(_char, 1)
+                                            Some(amount) => {counter.insert(_char, amount + 1);},
+                                            None => {}
                                         }
                                     });
                             },
