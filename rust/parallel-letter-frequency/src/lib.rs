@@ -29,11 +29,13 @@ pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
                     {
                         j if j < *len =>
                             {
-                                let _ = (*data).get(j)
+                                (*data).get(j)
                                     .unwrap()
+                                    .to_lowercase()
                                     .chars()
                                     .into_iter()
-                                    .map(|_char| {
+                                    .filter(|_char| _char.is_alphabetic())
+                                    .for_each(|_char| {
                                         let mut counter = counter.lock().unwrap();
                                         match counter.insert(_char, 1)
                                         {
