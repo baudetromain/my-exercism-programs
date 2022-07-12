@@ -13,6 +13,22 @@ enum Value
     Two, Three, Four, Five, Six, Seven, Eight, Nine, Jack, Queen, King, Ace
 }
 
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Color
+{
+    Spade, Diamond, Heart, Club
+}
+
+#[derive(PartialEq, Debug)]
+struct PokerCard
+{
+    value: Value,
+    color: Color
+}
+
+#[derive(PartialEq, Debug)]
+struct PokerHand(Vec<PokerCard>);
+
 impl FromStr for Value
 {
     type Err = PokerHandFromStrConversionError;
@@ -47,12 +63,6 @@ impl FromStr for Value
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-enum Color
-{
-    Spade, Diamond, Heart, Club
-}
-
 impl FromStr for Color
 {
     type Err = PokerHandFromStrConversionError;
@@ -79,13 +89,6 @@ impl FromStr for Color
     }
 }
 
-#[derive(PartialEq, Debug)]
-struct PokerCard
-{
-    value: Value,
-    color: Color
-}
-
 impl FromStr for PokerCard
 {
     type Err = PokerHandFromStrConversionError;
@@ -103,20 +106,6 @@ impl FromStr for PokerCard
             color: Color::from_str(s.chars().nth(1).unwrap().to_string().as_str())?,
         })
     }
-}
-
-#[derive(PartialEq, Debug)]
-struct PokerHand(Vec<PokerCard>);
-
-#[derive(PartialEq, Debug)]
-enum PokerHandFromStrConversionError
-{
-    CardsAmountError,
-    CardLenError,
-    UnknownColor,
-    UnknownValue,
-    ColorLenError,
-    ValueLenError
 }
 
 impl FromStr for PokerHand
@@ -137,6 +126,17 @@ impl FromStr for PokerHand
             .collect::<Result<Vec<PokerCard>, PokerHandFromStrConversionError>>()
             .map(|vec| PokerHand(vec))
     }
+}
+
+#[derive(PartialEq, Debug)]
+enum PokerHandFromStrConversionError
+{
+    CardsAmountError,
+    CardLenError,
+    UnknownColor,
+    UnknownValue,
+    ColorLenError,
+    ValueLenError
 }
 
 #[test]
