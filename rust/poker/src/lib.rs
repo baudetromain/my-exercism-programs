@@ -27,7 +27,7 @@ struct PokerCard
 }
 
 #[derive(PartialEq, Debug)]
-struct PokerHand(Vec<PokerCard>);
+struct PokerHand([PokerCard ; 5]);
 
 impl FromStr for Value
 {
@@ -124,7 +124,7 @@ impl FromStr for PokerHand
         split_str.iter()
             .map(|str_card_rep| PokerCard::from_str(str_card_rep))
             .collect::<Result<Vec<PokerCard>, PokerHandFromStrConversionError>>()
-            .map(|vec| PokerHand(vec))
+            .map(|vec| PokerHand(<[PokerCard; 5]>::try_from(vec).unwrap()))
     }
 }
 
@@ -144,7 +144,7 @@ fn basic_success()
 {
     assert_eq!(
         "2S 4S 7H AC JH".parse::<PokerHand>(),
-        Ok(PokerHand{ 0: vec![
+        Ok(PokerHand{ 0: [
             PokerCard { color: Color::Spade, value: Value::Two },
             PokerCard { color: Color::Spade, value: Value::Four },
             PokerCard { color: Color::Heart, value: Value::Seven },
