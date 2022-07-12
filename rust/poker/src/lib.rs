@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::str::FromStr;
 
 #[macro_use] extern crate maplit;
@@ -137,6 +138,98 @@ enum PokerHandFromStrConversionError
     UnknownValue,
     ColorLenError,
     ValueLenError
+}
+
+#[derive(PartialEq)]
+enum HandCombo
+{
+    RoyalFlush,             // no need to store anything cause any royal flush is equal to another
+    StraightFlush(u8),      // storing the highest
+    FourOfAKind(u8),        // storing the value
+    FullHouse([u8 ; 2]),    // storing the 2 values
+    Flush([u8 ; 5]),        // storing the 5 values
+    Straight(u8),           // storing the highest value
+    ThreeOfAKind(u8),       // storing the value
+    TwoPairs([u8 ; 2]),     // storing the 2 values
+    Pair(u8),               // storing the value
+    HighCard(u8)            // storing the value
+}
+
+impl HandCombo
+{
+    fn ranking(&self) -> u8
+    {
+        match self
+        {
+            HandCombo::HighCard(_) => 1,
+            HandCombo::Pair(_) => 2,
+            HandCombo::TwoPairs(_) => 3,
+            HandCombo::ThreeOfAKind(_) => 4,
+            HandCombo::Straight(_) => 5,
+            HandCombo::Flush(_) => 6,
+            HandCombo::FullHouse(_) => 7,
+            HandCombo::FourOfAKind(_) => 8,
+            HandCombo::StraightFlush(_) => 9,
+            HandCombo::RoyalFlush => 10
+        }
+    }
+}
+
+impl PartialOrd for HandCombo
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>
+    {
+        match self.ranking().cmp(&other.ranking())
+        {
+            Ordering::Greater => Some(Ordering::Greater),
+            Ordering::Less => Some(Ordering::Less),
+            Ordering::Equal =>
+            {
+                match self
+                {
+                    HandCombo::RoyalFlush => Some(Ordering::Equal),
+                    HandCombo::StraightFlush(self_highest) =>
+                    {
+                        if let HandCombo::StraightFlush(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    },
+                    HandCombo::FourOfAKind(self_highest) =>
+                    {
+                        if let HandCombo::FourOfAKind(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    },
+                    HandCombo::FullHouse(self_values) =>
+                    {
+                        if let HandCombo::FullHouse(other_values) = other
+                        {
+                            let mut self_values = self_values.iter().map(|n| *n).collect::<Vec<u8>>();
+                            let mut other_values = other_values.iter().map(|n| *n).collect::<Vec<u8>>();
+
+                            self_values.sort();
+                            other_values.sort();
+
+                            return if let Ordering::Equal = self_values.get(0).cmp(&other_values.get(0))
+                            {
+                                Some(self_values.get(1).cmp(&other_values.get(1)))
+                            }
+                            else
+                            {
+                                Some(self_values.get(0).cmp(&other_values.get(0)))
+                            }
+                        }
+                        None
+                    },
+                    _ => None // TODO
+                }
+            }
+        }
+    }
 }
 
 #[test]
