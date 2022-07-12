@@ -3,7 +3,10 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 
 pub fn frequency(input: &[&str], worker_count: usize) -> HashMap<char, usize> {
-    let data = Arc::new(input);
+    let owned_data = input.iter()
+        .map(|the_str| String::from(*the_str))
+        .collect::<Vec<String>>();
+    let data = Arc::new(owned_data);
     let counter: Arc<Mutex<HashMap<char, usize>>> = Arc::new(Mutex::new(HashMap::new()));
     let len: Arc<usize> = Arc::new(input.len());
     let mut handles = vec![];
