@@ -8,7 +8,7 @@ use std::str::FromStr;
 /// Note the type signature: this function should return _the same_ reference to
 /// the winning hand(s) as were passed in, not reconstructed strings which happen to be equal.
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Value
 {
     Two, Three, Four, Five, Six, Seven, Eight, Nine, Jack, Queen, King, Ace
@@ -129,6 +129,43 @@ impl FromStr for PokerHand
     }
 }
 
+impl Value
+{
+    fn ranking(&self) -> u8
+    {
+        match self
+        {
+            Value::Two => 2,
+            Value::Three => 3,
+            Value::Four => 4,
+            Value::Five => 5,
+            Value::Six => 6,
+            Value::Seven => 7,
+            Value::Eight => 8,
+            Value::Nine => 9,
+            Value::Jack => 10,
+            Value::Queen => 11,
+            Value::King => 12,
+            Value::Ace => 13,
+        }
+    }
+}
+
+impl PartialOrd for Value
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>
+    {
+        Some(self.ranking().cmp(&other.ranking()))
+    }
+}
+
+impl Ord for Value
+{
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(&other).unwrap()
+    }
+}
+
 #[derive(PartialEq, Debug)]
 enum PokerHandFromStrConversionError
 {
@@ -144,15 +181,15 @@ enum PokerHandFromStrConversionError
 enum HandCombo
 {
     RoyalFlush,             // no need to store anything cause any royal flush is equal to another
-    StraightFlush(u8),      // storing the highest
-    FourOfAKind(u8),        // storing the value
-    FullHouse([u8 ; 2]),    // storing the 2 values
-    Flush([u8 ; 5]),        // storing the 5 values
-    Straight(u8),           // storing the highest value
-    ThreeOfAKind(u8),       // storing the value
-    TwoPairs([u8 ; 2]),     // storing the 2 values
-    Pair(u8),               // storing the value
-    HighCard(u8)            // storing the value
+    StraightFlush(Value),      // storing the highest
+    FourOfAKind(Value),        // storing the value
+    FullHouse([Value ; 2]),    // storing the 2 values
+    Flush([Value ; 5]),        // storing the 5 values
+    Straight(Value),           // storing the highest value
+    ThreeOfAKind(Value),       // storing the value
+    TwoPairs([Value ; 2]),     // storing the 2 values
+    Pair(Value),               // storing the value
+    HighCard(Value)            // storing the value
 }
 
 impl HandCombo
@@ -208,24 +245,98 @@ impl PartialOrd for HandCombo
                     {
                         if let HandCombo::FullHouse(other_values) = other
                         {
-                            let mut self_values = self_values.iter().map(|n| *n).collect::<Vec<u8>>();
-                            let mut other_values = other_values.iter().map(|n| *n).collect::<Vec<u8>>();
+                            let mut self_values = self_values.iter().map(|n| *n).collect::<Vec<Value>>();
+                            let mut other_values = other_values.iter().map(|n| *n).collect::<Vec<Value>>();
 
-                            self_values.sort();
-                            other_values.sort();
+                            self_values.sort_unstable();
+                            other_values.sort_unstable();
 
-                            return if let Ordering::Equal = self_values.get(0).cmp(&other_values.get(0))
-                            {
-                                Some(self_values.get(1).cmp(&other_values.get(1)))
-                            }
-                            else
-                            {
-                                Some(self_values.get(0).cmp(&other_values.get(0)))
-                            }
+                            let self_values = self_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+                            let other_values = other_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+
+                            return Some(self_values.cmp(&other_values));
                         }
                         None
                     },
-                    _ => None // TODO
+                    HandCombo::Flush(self_values) =>
+                    {
+                        if let HandCombo::Flush(other_values) = other
+                        {
+                            let mut self_values = self_values.iter().map(|n| *n).collect::<Vec<Value>>();
+                            let mut other_values = other_values.iter().map(|n| *n).collect::<Vec<Value>>();
+
+                            self_values.sort_unstable();
+                            other_values.sort_unstable();
+
+                            let self_values = self_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+                            let other_values = other_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+
+                            return Some(self_values.cmp(&other_values));
+                        }
+
+                        None
+                    },
+                    HandCombo::Straight(self_highest) =>
+                    {
+                        if let HandCombo::Straight(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    },
+                    HandCombo::ThreeOfAKind(self_highest) =>
+                    {
+                        if let HandCombo::ThreeOfAKind(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    },
+                    HandCombo::TwoPairs(self_values) =>
+                    {
+                        if let HandCombo::TwoPairs(other_values) = other
+                        {
+                            let mut self_values = self_values.iter().map(|n| *n).collect::<Vec<Value>>();
+                            let mut other_values = other_values.iter().map(|n| *n).collect::<Vec<Value>>();
+
+                            self_values.sort_unstable();
+                            other_values.sort_unstable();
+
+                            let self_values = self_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+                            let other_values = other_values.iter()
+                                .rev()
+                                .collect::<Vec<&Value>>();
+
+                            return Some(self_values.cmp(&other_values));
+                        }
+                        None
+                    },
+                    HandCombo::Pair(self_highest) =>
+                    {
+                        if let HandCombo::Pair(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    },
+                    HandCombo::HighCard(self_highest) =>
+                    {
+                        if let HandCombo::HighCard(other_highest) = other
+                        {
+                            return Some(self_highest.cmp(other_highest))
+                        }
+                        None
+                    }
                 }
             }
         }
@@ -244,7 +355,7 @@ fn basic_success()
             PokerCard { color: Color::Club, value: Value::Ace },
             PokerCard { color: Color::Heart, value: Value::Jack },
         ] })
-    );
+    )
 }
 
 #[test]
@@ -298,6 +409,66 @@ fn wrong_value()
     assert_eq!(
         "2S 4S 7H AC ZH".parse::<PokerHand>(),
         Err(PokerHandFromStrConversionError::UnknownValue)
+    )
+}
+
+#[test]
+fn different_combos()
+{
+    assert_eq!(
+        HandCombo::RoyalFlush
+            .partial_cmp(&HandCombo::Pair(Value::Five)),
+        Some(Ordering::Greater)
+    )
+}
+
+#[test]
+fn different_combos2()
+{
+    assert_eq!(
+        HandCombo::ThreeOfAKind(Value::Three)
+            .partial_cmp(&HandCombo::TwoPairs([Value::Five, Value::Eight])),
+        Some(Ordering::Greater)
+    )
+}
+
+#[test]
+fn same_combos_simple_element()
+{
+    assert_eq!(
+        HandCombo::Pair(Value::Three)
+            .partial_cmp(&HandCombo::Pair(Value::Seven)),
+        Some(Ordering::Less)
+    )
+}
+
+#[test]
+fn same_combos_two_elements()
+{
+    assert_eq!(
+        HandCombo::TwoPairs([Value::Three, Value::Nine])
+            .partial_cmp(&HandCombo::TwoPairs([Value::Five, Value::Seven])),
+        Some(Ordering::Greater)
+    )
+}
+
+#[test]
+fn same_combos_two_elements_equal()
+{
+    assert_eq!(
+        HandCombo::FullHouse([Value::Three, Value::Nine])
+            .partial_cmp(&HandCombo::FullHouse([Value::Nine, Value::Three])),
+        Some(Ordering::Equal)
+    )
+}
+
+#[test]
+fn same_combos_five_elements()
+{
+    assert_eq!(
+        HandCombo::Flush([Value::Two, Value::Five, Value::Seven, Value::Queen, Value::Ace])
+            .partial_cmp(&HandCombo::Flush([Value::Two, Value::Five, Value::Eight, Value::Queen, Value::Ace])),
+        Some(Ordering::Less)
     )
 }
 
