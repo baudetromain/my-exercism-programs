@@ -20,14 +20,14 @@ enum Color
     Spade, Diamond, Heart, Club
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct PokerCard
 {
     value: Value,
     color: Color
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct PokerHand([PokerCard ; 5]);
 
 impl FromStr for Value
@@ -180,16 +180,16 @@ enum PokerHandFromStrConversionError
 #[derive(PartialEq)]
 enum HandCombo
 {
-    RoyalFlush,             // no need to store anything cause any royal flush is equal to another
-    StraightFlush(Value),      // storing the highest
-    FourOfAKind(Value),        // storing the value
-    FullHouse([Value ; 2]),    // storing the 2 values
-    Flush([Value ; 5]),        // storing the 5 values
-    Straight(Value),           // storing the highest value
-    ThreeOfAKind(Value),       // storing the value
-    TwoPairs([Value ; 2]),     // storing the 2 values
-    Pair(Value),               // storing the value
-    HighCard(Value)            // storing the value
+    RoyalFlush,                 // no need to store anything cause any royal flush is equal to another
+    StraightFlush(Value),       // storing the highest value
+    FourOfAKind(Value),         // storing the value
+    FullHouse([Value ; 2]),     // storing the 2 values
+    Flush([Value ; 5]),         // storing the 5 values
+    Straight(Value),            // storing the highest value
+    ThreeOfAKind(Value),        // storing the value
+    TwoPairs([Value ; 2]),      // storing the 2 values
+    Pair(Value),                // storing the value
+    HighCard(Value)             // storing the value
 }
 
 impl HandCombo
@@ -340,6 +340,35 @@ impl PartialOrd for HandCombo
                 }
             }
         }
+    }
+}
+
+impl Into<Vec<PokerCard>> for PokerHand
+{
+    fn into(self) -> Vec<PokerCard>
+    {
+        self.0.to_vec()
+    }
+}
+
+impl PokerHand
+{
+    fn find_combos(self) -> Vec<HandCombo>
+    {
+        let mut hand: Vec<PokerCard> = self.into();
+        let mut combos: Vec<HandCombo> = vec![];
+
+        while hand.len() != 0
+        {
+            combos.push(Self::find_best_combo(&mut hand));
+        }
+
+        combos
+    }
+
+    fn find_best_combo(hand: &mut Vec<PokerCard>) -> HandCombo
+    {
+        unimplemented!()
     }
 }
 
