@@ -447,7 +447,12 @@ impl PokerHand
 
     fn find_four_of_a_kind(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
     {
-        unimplemented!()
+        if hand.len() < 4
+        {
+            return None;
+        }
+
+        todo!("find the four of a kind if there is one")
     }
 
     fn find_full_house(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
