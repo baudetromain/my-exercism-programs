@@ -11,10 +11,10 @@ use std::str::FromStr;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Value
 {
-    Two, Three, Four, Five, Six, Seven, Eight, Nine, Jack, Queen, King, Ace
+    Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Color
 {
     Spade, Diamond, Heart, Club
@@ -51,6 +51,7 @@ impl FromStr for Value
             '7' => Value::Seven,
             '8' => Value::Eight,
             '9' => Value::Nine,
+            'T' => Value::Ten,
             'J' => Value::Jack,
             'Q' => Value::Queen,
             'K' => Value::King,
@@ -143,10 +144,11 @@ impl Value
             Value::Seven => 7,
             Value::Eight => 8,
             Value::Nine => 9,
-            Value::Jack => 10,
-            Value::Queen => 11,
-            Value::King => 12,
-            Value::Ace => 13,
+            Value::Ten => 10,
+            Value::Jack => 11,
+            Value::Queen => 12,
+            Value::King => 13,
+            Value::Ace => 14,
         }
     }
 }
@@ -163,6 +165,14 @@ impl Ord for Value
 {
     fn cmp(&self, other: &Self) -> Ordering {
         self.partial_cmp(&other).unwrap()
+    }
+}
+
+impl PartialOrd for PokerCard
+{
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering>
+    {
+        Some(self.value.cmp(&other.value))
     }
 }
 
@@ -367,6 +377,110 @@ impl PokerHand
     }
 
     fn find_best_combo(hand: &mut Vec<PokerCard>) -> HandCombo
+    {
+        hand.sort_by(|a, b| b.partial_cmp(a).unwrap());
+
+        Self::find_royal_flush(hand)
+            .unwrap_or(Self::find_straight_flush(hand)
+                .unwrap_or(Self::find_four_of_a_kind(hand)
+                    .unwrap_or(Self::find_full_house(hand)
+                        .unwrap_or(Self::find_flush(hand)
+                            .unwrap_or(Self::find_straight(hand)
+                                .unwrap_or(Self::find_three_of_a_kind(hand)
+                                    .unwrap_or(Self::find_two_pairs(hand)
+                                        .unwrap_or(Self::find_pair(hand)
+                                            .unwrap_or(Self::find_high_card(hand))))))))))
+    }
+
+    fn find_royal_flush(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        if hand.len() != 5
+        {
+            return None;
+        }
+
+        if hand.get(0).unwrap().value == Value::Ace
+            && hand.get(1).unwrap().value == Value::King
+            && hand.get(2).unwrap().value == Value::Queen
+            && hand.get(3).unwrap().value == Value::Jack
+            && hand.get(4).unwrap().value == Value::Ten
+        {
+            for i in (0..hand.len()).rev()
+            {
+                hand.remove(i);
+            }
+
+            return Some(HandCombo::RoyalFlush);
+        }
+
+        None
+    }
+
+    fn find_straight_flush(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        if hand.len() != 5
+        {
+            return None;
+        }
+
+        if hand.get(0).unwrap().value.ranking() == hand.get(1).unwrap().value.ranking() + 1
+            && hand.get(1).unwrap().value.ranking() == hand.get(2).unwrap().value.ranking() + 1
+            && hand.get(2).unwrap().value.ranking() == hand.get(3).unwrap().value.ranking() + 1
+            && hand.get(3).unwrap().value.ranking() == hand.get(4).unwrap().value.ranking() + 1
+
+            && [hand.get(0).unwrap().color, hand.get(1).unwrap().color, hand.get(2).unwrap().color, hand.get(3).unwrap().color, hand.get(4).unwrap().color]
+            .iter()
+            .filter(|color| color != &&hand.get(0).unwrap().color)
+            .count() == 0
+        {
+            for i in (1..hand.len()).rev()
+            {
+                hand.remove(i);
+            }
+
+            let highest_card = hand.remove(0);
+            return Some(HandCombo::StraightFlush(highest_card.value));
+        }
+
+            None
+    }
+
+    fn find_four_of_a_kind(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_full_house(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_flush(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_straight(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_three_of_a_kind(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_two_pairs(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_pair(hand: &mut Vec<PokerCard>) -> Option<HandCombo>
+    {
+        unimplemented!()
+    }
+
+    fn find_high_card(hand: &mut Vec<PokerCard>) -> HandCombo
     {
         unimplemented!()
     }
